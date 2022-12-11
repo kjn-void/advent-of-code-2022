@@ -6,10 +6,22 @@ My solutions for Advent of Code 2022 in Go
 
     $ go run . DAY
 
-# Run all tests
+## Run tests
+
+### All
 
     $ go test
 
-# Run all benchmarks
+### Specific day
+
+    $ go test -run Day7
+
+## Run benchmarks
+
+### All
 
     $ go test -bench .
+
+### Specific day
+
+    $ go test -bench Day11
