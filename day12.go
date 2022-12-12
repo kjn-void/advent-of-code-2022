@@ -60,7 +60,7 @@ func (hm Heightmap) StepsToHighestPoint(start, end Pos) int {
 	path := Path{start, 0}
 	for path.pos != end {
 		for _, nextPos := range hm.reachableFrom(path.pos) {
-			if visited.getHeight(path.pos) == 0 {
+			if visited.getHeight(nextPos) == 0 {
 				posQ.enqueue(Path{nextPos, path.steps + 1})
 				visited.setHeight(nextPos, 1)
 			}
