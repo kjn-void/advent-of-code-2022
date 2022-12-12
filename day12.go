@@ -10,11 +10,6 @@ type Pos struct {
 	X, Y int
 }
 
-type Dir struct {
-	pos Pos
-	dir int
-}
-
 type Path struct {
 	pos   Pos
 	steps int
@@ -46,13 +41,13 @@ func (hm *Heightmap) setHeight(pos Pos, z byte) {
 	hm.Zs[pos.Y*hm.Width+pos.X] = z
 }
 
-func (hm Heightmap) reachableFrom(pos Pos) []Dir {
-	reachablePositions := []Dir{}
+func (hm Heightmap) reachableFrom(pos Pos) []Pos {
+	reachablePositions := []Pos{}
 	h := hm.getHeight(pos)
-	for x, d := range [...]Pos{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
+	for _, d := range [...]Pos{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
 		adjacentPos := Pos{pos.X + d.X, pos.Y + d.Y}
 		if isReachable(h, hm.getHeight(adjacentPos)) {
-			reachablePositions = append(reachablePositions, Dir{adjacentPos, x})
+			reachablePositions = append(reachablePositions, adjacentPos)
 		}
 	}
 	return reachablePositions
@@ -60,14 +55,14 @@ func (hm Heightmap) reachableFrom(pos Pos) []Dir {
 
 func (hm Heightmap) StepsToHighestPoint(start, end Pos) int {
 	visited := Heightmap{make([]byte, hm.Height*hm.Width), hm.Height, hm.Width}
-	visited.setHeight(start, 5)
+	visited.setHeight(start, 1)
 	posQ := PathQueue{}
 	path := Path{start, 0}
 	for path.pos != end {
 		for _, nextPos := range hm.reachableFrom(path.pos) {
-			if visited.getHeight(nextPos.pos) == 0 {
-				posQ.enqueue(Path{nextPos.pos, path.steps + 1})
-				visited.setHeight(nextPos.pos, byte(nextPos.dir+1))
+			if visited.getHeight(path.pos) == 0 {
+				posQ.enqueue(Path{nextPos, path.steps + 1})
+				visited.setHeight(nextPos, 1)
 			}
 		}
 		if len(posQ) == 0 {
