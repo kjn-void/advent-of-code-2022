@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -81,16 +82,8 @@ func monkeyBusinessAfter(monkeys Monkeys, rounds int, reliefDivisor WorryLevel) 
 }
 
 func monkeyBusiness(monkeys Monkeys) WorryLevel {
-	ins := [2]uint{}
-	for _, monkey := range monkeys {
-		if ins[0] < monkey.inspections {
-			ins[1] = ins[0]
-			ins[0] = monkey.inspections
-		} else if ins[1] < monkey.inspections {
-			ins[1] = monkey.inspections
-		}
-	}
-	return WorryLevel(ins[0]) * WorryLevel(ins[1])
+	sort.Slice(monkeys, func(i, j int) bool { return monkeys[i].inspections > monkeys[j].inspections })
+	return WorryLevel(monkeys[0].inspections) * WorryLevel(monkeys[1].inspections)
 }
 
 func reliefValue(monkeys Monkeys) WorryLevel {
