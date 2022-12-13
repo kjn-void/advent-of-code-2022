@@ -31,7 +31,7 @@ func numberToList(number int) []PacketValue {
 	return []PacketValue{value}
 }
 
-func areListsInRightOrder(left, right []PacketValue) PacketOrder {
+func packetListsOrder(left, right []PacketValue) PacketOrder {
 	for i := 0; ; i++ {
 		if len(left) == i {
 			if len(right) == i {
@@ -42,14 +42,14 @@ func areListsInRightOrder(left, right []PacketValue) PacketOrder {
 		if len(right) == i {
 			return WRONG_ORDER
 		}
-		order := areValuesInRightOrder(left[i], right[i])
+		order := packetValuesOrder(left[i], right[i])
 		if order != EQUAL_ORDER {
 			return order
 		}
 	}
 }
 
-func areValuesInRightOrder(left, right PacketValue) PacketOrder {
+func packetValuesOrder(left, right PacketValue) PacketOrder {
 	if left.list == nil {
 		if right.list == nil {
 			switch {
@@ -61,17 +61,17 @@ func areValuesInRightOrder(left, right PacketValue) PacketOrder {
 				return EQUAL_ORDER
 			}
 		}
-		return areListsInRightOrder(numberToList(left.number), right.list)
+		return packetListsOrder(numberToList(left.number), right.list)
 	} else {
 		if right.list == nil {
-			return areListsInRightOrder(left.list, numberToList(right.number))
+			return packetListsOrder(left.list, numberToList(right.number))
 		}
-		return areListsInRightOrder(left.list, right.list)
+		return packetListsOrder(left.list, right.list)
 	}
 }
 
 func (packet Packet) isInRightOrder() bool {
-	return areValuesInRightOrder(packet.left, packet.right) == RIGHT_ORDER
+	return packetValuesOrder(packet.left, packet.right) == RIGHT_ORDER
 }
 
 func SumPacketIndicesInRightOrder(packets []Packet) int {
@@ -93,7 +93,7 @@ func packetList(packets []Packet) []PacketValue {
 	return list
 }
 
-func DividerPackets() [2]PacketValue {
+func dividerPackets() [2]PacketValue {
 	divider := [2]PacketValue{}
 	col := 0
 	divider[0] = parsePacketValue("[[2]]", &col)
@@ -103,20 +103,20 @@ func DividerPackets() [2]PacketValue {
 }
 
 func DecoderKey(packets []PacketValue) int {
-	divider := DividerPackets()
+	divider := dividerPackets()
 	packets = append(packets, divider[:]...)
 
-	sort.Slice(packets, func(i, j int) bool { return areValuesInRightOrder(packets[i], packets[j]) == RIGHT_ORDER })
+	sort.Slice(packets, func(i, j int) bool { return packetValuesOrder(packets[i], packets[j]) == RIGHT_ORDER })
 
 	key := 1
 	d := 0
 	for i, packet := range packets {
-		if areValuesInRightOrder(packet, divider[d]) == EQUAL_ORDER {
+		if packetValuesOrder(packet, divider[d]) == EQUAL_ORDER {
+			key *= i + 1
 			d++
-			key *= (i + 1)
-		}
-		if d == len(divider) {
-			break
+			if d == len(divider) {
+				break
+			}
 		}
 	}
 	return key
