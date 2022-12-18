@@ -142,14 +142,14 @@ func DropRocksIntoWell(jets Jets, result chan uint64) {
 		if p, found := seen[rockJetComb]; found {
 			period := n - p.Round
 			if n%period == ROCK_STOP_LIMIT%period {
-				part2Height = p.Height + (highest+1-p.Height)*(((ROCK_STOP_LIMIT-n)/period)+1) - 1
+				part2Height = p.Height + (highest-p.Height)*(((ROCK_STOP_LIMIT-n)/period)+1)
 				if part1Done {
 					result <- part2Height
 					return
 				}
 			}
 		} else {
-			seen[rockJetComb] = RoundHeightPair{n, highest + 1}
+			seen[rockJetComb] = RoundHeightPair{n, highest}
 		}
 
 		if n == NUMBER_OF_ROCKS_PART1 {
