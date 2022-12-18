@@ -23,7 +23,7 @@ type Cube struct {
 
 type CubeWorld struct {
 	cubes []Cube
-	// No cube is at 0 and dimensions is one outside any cube
+	// No cube is at 0 and dimensions is one larger than any cube position
 	width  int8
 	height int8
 	depth  int8
@@ -31,14 +31,14 @@ type CubeWorld struct {
 
 type Face uint64
 
-func (face *Face) set(pos Cube, index int) {
+func (face *Face) set(vertex Cube, index int) {
 	mask := Face((1 << POINT_STRIDE) - 1)
 	mask <<= POINT_STRIDE * index
 	*face &= ^mask
 
-	x := Face(pos.X)
-	y := Face(pos.Y)
-	z := Face(pos.Z)
+	x := Face(vertex.X)
+	y := Face(vertex.Y)
+	z := Face(vertex.Z)
 	pt := x + (y << BITS_PER_COORD) + (z << (2 * BITS_PER_COORD))
 	pt <<= POINT_STRIDE * index
 	*face |= pt
@@ -90,7 +90,7 @@ func (cube Cube) faces() [6]Face {
 	}
 }
 
-func (world CubeWorld) fillWater(cubes *[]Cube, visited []bool, pos Cube) {
+func (world CubeWorld) tryFillWithWater(cubes *[]Cube, visited []bool, pos Cube) {
 	if pos.X < 0 || pos.X >= world.width ||
 		pos.Y < 0 || pos.Y >= world.height ||
 		pos.Z < 0 || pos.Z >= world.depth {
@@ -104,8 +104,9 @@ func (world CubeWorld) fillWater(cubes *[]Cube, visited []bool, pos Cube) {
 	visited[offset] = true
 	*cubes = append(*cubes, pos)
 
-	for _, d := range [6]Cube{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}} {
-		world.fillWater(cubes, visited, Cube{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z})
+	for _, d := range [6]Cube{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}} {
+		newPos := Cube{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z}
+		world.tryFillWithWater(cubes, visited, newPos)
 	}
 }
 
@@ -124,7 +125,7 @@ func (world CubeWorld) fillWithWater() []Cube {
 	for _, cube := range cubes {
 		visited[world.visitedOffset(cube)] = true
 	}
-	world.fillWater(&cubes, visited, Cube{})
+	world.tryFillWithWater(&cubes, visited, Cube{})
 	return cubes
 }
 
