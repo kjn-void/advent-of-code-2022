@@ -9,14 +9,13 @@ const (
 )
 
 type Jets []bool
-
-type RockPos struct {
-	X, Y int
+type RockLine uint16
+type RockShape []RockLine
+type Rock struct {
+	RockShape
+	Depth int
 }
-
-type RockShape []RockPos
-
-type Well map[RockPos]bool
+type Well []RockLine
 
 type ShapeJetIndices struct {
 	RockIndex int
@@ -29,65 +28,64 @@ type RoundHeightPair struct {
 }
 
 var shapes = [5]RockShape{
-	{{2, 0}, {3, 0}, {4, 0}, {5, 0}},         // - shape
-	{{3, 0}, {2, 1}, {3, 1}, {4, 1}, {3, 2}}, // + shape
-	{{2, 0}, {3, 0}, {4, 0}, {4, 1}, {4, 2}}, // ⅃ shape
-	{{2, 0}, {2, 1}, {2, 2}, {2, 3}},         // | shape
-	{{2, 0}, {3, 0}, {2, 1}, {3, 1}},         // ▖ shape
+	{RockLine(0x78)}, // - shape
+	{RockLine(0x10), RockLine(0x38), RockLine(0x10)},                 // + shape
+	{RockLine(0x38), RockLine(0x20), RockLine(0x20)},                 // ⅃ shape
+	{RockLine(0x08), RockLine(0x08), RockLine(0x08), RockLine(0x08)}, // | shape
+	{RockLine(0x18), RockLine(0x18)},                                 // ▖ shape
 }
 
-func (rock RockShape) clone() RockShape {
-	return append(RockShape{}, rock...)
+func (shape RockShape) clone() RockShape {
+	return append([]RockLine{}, shape...)
 }
 
-func (rock RockShape) addDepth(depth int) {
-	for i := range rock {
-		rock[i].Y += depth
-	}
-
-}
-
-func (rock RockShape) tryFall(well Well) bool {
-	for _, pt := range rock {
-		if well[RockPos{pt.X, pt.Y - 1}] {
+func (rock *Rock) tryFall(well Well) bool {
+	for dY, sprite := range rock.RockShape {
+		if well[rock.Depth+dY-1]&sprite != 0 {
 			return false
 		}
 	}
-	for i := range rock {
-		rock[i].Y--
-	}
+	rock.Depth--
 	return true
 }
 
-func (rock RockShape) tryApplyJet(well Well, pushLeft bool) {
-	dX := 1
-	if pushLeft {
-		dX = -1
-	}
-	for _, pt := range rock {
-		newPos := RockPos{pt.X + dX, pt.Y}
-		if newPos.X < 0 || newPos.X == CHAMBER_WIDTH || well[newPos] {
+func (rock *Rock) tryApplyJet(well Well, pushLeft bool) {
+	for dY, sprite := range rock.RockShape {
+		if pushLeft {
+			sprite >>= 1
+		} else {
+			sprite <<= 1
+		}
+		if well[rock.Depth+dY]&sprite != 0 {
 			return
 		}
 	}
-	for i := range rock {
-		rock[i].X += dX
+	for i := range rock.RockShape {
+		if pushLeft {
+			rock.RockShape[i] >>= 1
+		} else {
+			rock.RockShape[i] <<= 1
+		}
 	}
 }
 
-func (well Well) createFloor() {
-	for x := 0; x < CHAMBER_WIDTH; x++ {
-		well[RockPos{x, 0}] = true
+func (well *Well) createFloor() {
+	*well = append(*well, RockLine(0x1ff))
+}
+
+func (well *Well) grow(highest uint64) {
+	for uint64(len(*well)) < highest+8 {
+		*well = append(*well, RockLine(0x101))
 	}
 }
 
-func (well Well) addRock(rock RockShape) {
-	for _, pt := range rock {
-		well[pt] = true
+func (well Well) addRock(rock Rock) {
+	for dY, sprite := range rock.RockShape {
+		well[rock.Depth+dY] |= sprite
 	}
 }
 
-func (well Well) dropRock(rock RockShape, jets Jets, jetIndex int) (int, uint64) {
+func (well Well) dropRock(rock Rock, jets Jets, jetIndex int) (int, uint64) {
 	for {
 		jet := jets[jetIndex]
 		jetIndex++
@@ -98,21 +96,18 @@ func (well Well) dropRock(rock RockShape, jets Jets, jetIndex int) (int, uint64)
 		rock.tryApplyJet(well, jet)
 		if !rock.tryFall(well) {
 			well.addRock(rock)
-			return jetIndex, uint64(rock[len(rock)-1].Y)
+			return jetIndex, uint64(rock.Depth + len(rock.RockShape) - 1)
 		}
 	}
 }
 
 func (well Well) String() string {
 	d := []string{}
-	done := false
-	for y := 1; !done; y++ {
+	for y := 1; y < len(well); y++ {
 		s := "|"
-		done = true
 		for x := 0; x < CHAMBER_WIDTH; x++ {
-			if well[RockPos{x, y}] {
+			if well[y]&(1<<(x+1)) != 0 {
 				s += "#"
-				done = false
 			} else {
 				s += "."
 			}
@@ -138,7 +133,9 @@ func DropRocksIntoWell(jets Jets, result chan uint64) {
 	seen := map[ShapeJetIndices]RoundHeightPair{}
 	well.createFloor()
 
-	for n := uint64(0); n <= 3500; n++ {
+	for n := uint64(0); n <= ROCK_STOP_LIMIT; n++ {
+		well.grow(highest)
+
 		// fmt.Println(well)
 
 		rockJetComb := ShapeJetIndices{shapeIndex, jetIndex}
@@ -167,8 +164,14 @@ func DropRocksIntoWell(jets Jets, result chan uint64) {
 		shape := shapes[shapeIndex]
 
 		var highestRockPiece uint64
-		rock := shape.clone()
-		rock.addDepth(int(highest + 4))
+		rock := Rock{shape.clone(), int(highest + 4)}
+		// for dY, sprite := range rock.RockShape {
+		// 	well[rock.Depth+dY] |= sprite
+		// }
+		// fmt.Println(well)
+		// for dY, sprite := range rock.RockShape {
+		// 	well[rock.Depth+dY] &= ^sprite
+		// }
 		jetIndex, highestRockPiece = well.dropRock(rock, jets, jetIndex)
 		if highest < highestRockPiece {
 			highest = highestRockPiece
