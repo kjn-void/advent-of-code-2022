@@ -31,19 +31,6 @@ type CubeWorld struct {
 
 type Face uint64
 
-func (face Face) String() string {
-	s := "Face { "
-	for i := 0; i < 4; i++ {
-		pt := face >> (POINT_STRIDE * i) & ((1 << POINT_STRIDE) - 1)
-		x := pt & ((1 << BITS_PER_COORD) - 1)
-		y := (pt >> BITS_PER_COORD) & ((1 << BITS_PER_COORD) - 1)
-		z := (pt >> (2 * BITS_PER_COORD)) & ((1 << BITS_PER_COORD) - 1)
-		s += fmt.Sprintf("{ %d, %d, %d } ", x, y, z)
-	}
-	s += "}"
-	return s
-}
-
 func (face *Face) set(pos Cube, index int) {
 	mask := Face((1 << POINT_STRIDE) - 1)
 	mask <<= POINT_STRIDE * index
@@ -63,16 +50,16 @@ func (cube Cube) makeFace(whichFace FaceId, near bool) Face {
 		dF = int8(0)
 	}
 	var a, b *int8
-	switch {
-	case whichFace == XY_FACE:
+	switch whichFace {
+	case XY_FACE:
 		a = &cube.X
 		b = &cube.Y
 		cube.Z += dF
-	case whichFace == XZ_FACE:
+	case XZ_FACE:
 		a = &cube.X
 		b = &cube.Z
 		cube.Y += dF
-	case whichFace == YZ_FACE:
+	case YZ_FACE:
 		a = &cube.Y
 		b = &cube.Z
 		cube.X += dF
@@ -103,7 +90,7 @@ func (cube Cube) faces() [6]Face {
 	}
 }
 
-func (world CubeWorld) fillWaterFrom(cubes *[]Cube, visited []bool, pos Cube) {
+func (world CubeWorld) fillWater(cubes *[]Cube, visited []bool, pos Cube) {
 	if pos.X < 0 || pos.X >= world.width ||
 		pos.Y < 0 || pos.Y >= world.height ||
 		pos.Z < 0 || pos.Z >= world.depth {
@@ -114,12 +101,11 @@ func (world CubeWorld) fillWaterFrom(cubes *[]Cube, visited []bool, pos Cube) {
 	if visited[offset] {
 		return
 	}
-
 	visited[offset] = true
 	*cubes = append(*cubes, pos)
 
 	for _, d := range [6]Cube{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}} {
-		world.fillWaterFrom(cubes, visited, Cube{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z})
+		world.fillWater(cubes, visited, Cube{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z})
 	}
 }
 
@@ -133,14 +119,12 @@ func (world CubeWorld) visitedOffset(cube Cube) int {
 }
 
 func (world CubeWorld) fillWithWater() []Cube {
-	cubes := append([]Cube{}, world.cubes...)
 	visited := make([]bool, int(world.width)*int(world.height)*int(world.depth))
+	cubes := append([]Cube{}, world.cubes...)
 	for _, cube := range cubes {
 		visited[world.visitedOffset(cube)] = true
 	}
-
-	world.fillWaterFrom(&cubes, visited, Cube{})
-
+	world.fillWater(&cubes, visited, Cube{})
 	return cubes
 }
 
@@ -156,13 +140,11 @@ func (world CubeWorld) CountExteriorFreeFaces(totalFreeFaces int) int {
 
 func CountFreeFaces(cubes []Cube) int {
 	faces := map[Face]int{}
-
 	for _, cube := range cubes {
 		for _, face := range cube.faces() {
 			faces[face]++
 		}
 	}
-
 	numFreeFaces := 0
 	for _, cnt := range faces {
 		if cnt == 1 {
@@ -205,4 +187,18 @@ func parseCubeWorld(input []string) CubeWorld {
 		}
 	}
 	return world
+}
+
+// Debug...
+func (face Face) String() string {
+	s := "Face { "
+	for i := 0; i < 4; i++ {
+		pt := face >> (POINT_STRIDE * i) & ((1 << POINT_STRIDE) - 1)
+		x := pt & ((1 << BITS_PER_COORD) - 1)
+		y := (pt >> BITS_PER_COORD) & ((1 << BITS_PER_COORD) - 1)
+		z := (pt >> (2 * BITS_PER_COORD)) & ((1 << BITS_PER_COORD) - 1)
+		s += fmt.Sprintf("{ %d, %d, %d } ", x, y, z)
+	}
+	s += "}"
+	return s
 }
