@@ -96,21 +96,23 @@ func (cave Cave) UnitsOfSandToRest(isPart2 bool) int {
 	return unitsOfSand
 }
 
-func (cave Cave) print() {
+func (cave Cave) String() string {
+	s := ""
 	for y := 0; y < cave.FloorDepth+1; y++ {
 		for x := 490; x <= 510; x++ {
 			pos := CavePos{x, y}
 			switch {
 			case cave.get(pos) == TILE_AIR:
-				fmt.Print(".")
+				s += "."
 			case cave.get(pos) == TILE_ROCK:
-				fmt.Print("#")
+				s += "#"
 			case cave.get(pos) == TILE_SAND:
-				fmt.Print("O")
+				s += "O"
 			}
 		}
-		fmt.Println()
+		s += "\n"
 	}
+	return s
 }
 
 func day14(input []string) {
