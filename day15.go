@@ -71,18 +71,12 @@ func (sensorMap SensorMap) checkSensorPerimeter(sensor *Sensor, missingPosCh cha
 
 func (sensorMap SensorMap) TuningFrequency(maxCoord int) uint64 {
 	numSensors := len(sensorMap.Sensors)
-	doneCh := make(chan bool)
 	missingPosCh := make(chan SensorPos, numSensors)
 
 	for i := 0; i < numSensors; i++ {
 		go func(sensorId int) {
 			sensorMap.checkSensorPerimeter(&sensorMap.Sensors[sensorId], missingPosCh, maxCoord)
-			doneCh <- true
 		}(i)
-	}
-
-	for i := 0; i < numSensors; i++ {
-		<-doneCh
 	}
 
 	missingPos := <-missingPosCh
