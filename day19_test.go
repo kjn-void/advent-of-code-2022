@@ -12,7 +12,7 @@ func TestDay19_1(t *testing.T) {
 	if len(blueprints) != 2 {
 		t.Fatalf("Expected 2 blueprints, got %d", len(blueprints))
 	}
-	numGeodes := blueprints[0].findMaxOpenGeodes(PRODUCTION_TIME_LIMIT_PART1)
+	numGeodes := blueprints[0].findMaxOpenGeodes(ProductionTimeLimitPart1)
 	if numGeodes != 9 && false {
 		t.Fatalf("Expected 9 open geodes from first blueprint, got %d", numGeodes)
 	}
@@ -23,7 +23,7 @@ func TestDay19_2(t *testing.T) {
 	if len(blueprints) != 2 {
 		t.Fatalf("Expected 2 blueprints, got %d", len(blueprints))
 	}
-	numGeodes := blueprints[1].findMaxOpenGeodes(PRODUCTION_TIME_LIMIT_PART1)
+	numGeodes := blueprints[1].findMaxOpenGeodes(ProductionTimeLimitPart1)
 	if numGeodes != 12 {
 		t.Fatalf("Expected 12 open geodes from second blueprint, got %d", numGeodes)
 	}

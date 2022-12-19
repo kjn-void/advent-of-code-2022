@@ -6,13 +6,13 @@ import (
 	"strconv"
 )
 
-type calories []int
-type sortedElfTrain []calories
+type Calories []int
+type SortedElfTrain []Calories
 
-func (et sortedElfTrain) Len() int      { return len(et) }
-func (et sortedElfTrain) Swap(i, j int) { et[i], et[j] = et[j], et[i] }
+func (et SortedElfTrain) Len() int      { return len(et) }
+func (et SortedElfTrain) Swap(i, j int) { et[i], et[j] = et[j], et[i] }
 
-func (cals calories) totalCalories() int {
+func (cals Calories) totalCalories() int {
 	totalElfCalories := 0
 	for _, cal := range cals {
 		totalElfCalories += cal
@@ -20,24 +20,24 @@ func (cals calories) totalCalories() int {
 	return totalElfCalories
 }
 
-func (et sortedElfTrain) carryingMostCalories() int {
+func (et SortedElfTrain) CarryingMostCalories() int {
 	return et[0].totalCalories()
 }
 
-func (et sortedElfTrain) topThreeCarrying() int {
+func (et SortedElfTrain) TopThreeCarrying() int {
 	if len(et) < 3 {
 		panic("Cannot calculate top three")
 	}
 	return et[0].totalCalories() + et[1].totalCalories() + et[2].totalCalories()
 }
 
-func parseElfTrain(input []string) sortedElfTrain {
-	cals := calories{}
-	elfs := sortedElfTrain{}
+func parseElfTrain(input []string) SortedElfTrain {
+	cals := Calories{}
+	elfs := SortedElfTrain{}
 	for _, cal := range input {
 		if len(cal) == 0 {
 			elfs = append(elfs, cals)
-			cals = calories{}
+			cals = Calories{}
 		} else {
 			if c, err := strconv.Atoi(cal); err == nil {
 				cals = append(cals, c)
@@ -52,8 +52,8 @@ func parseElfTrain(input []string) sortedElfTrain {
 
 func day1(input []string) {
 	elfs := parseElfTrain(input)
-	fmt.Println(elfs.carryingMostCalories())
-	fmt.Println(elfs.topThreeCarrying())
+	fmt.Println(elfs.CarryingMostCalories())
+	fmt.Println(elfs.TopThreeCarrying())
 }
 
 func init() {

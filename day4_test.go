@@ -13,7 +13,7 @@ var input4 = []string{
 
 func TestDay4_1(t *testing.T) {
 	assignments := parseSectionAssignments(input4)
-	cnt := countAssignmentsWhere(assignments, isRedundantAssignment)
+	cnt := CountAssignmentsWhere(assignments, isRedundantAssignment)
 	if cnt != 2 {
 		t.Fatalf("Got %v redundant assignments, expected 2", cnt)
 	}
@@ -21,7 +21,7 @@ func TestDay4_1(t *testing.T) {
 
 func TestDay4_2(t *testing.T) {
 	assignments := parseSectionAssignments(input4)
-	cnt := countAssignmentsWhere(assignments, isOverlappingAssignment)
+	cnt := CountAssignmentsWhere(assignments, isOverlappingAssignment)
 	if cnt != 4 {
 		t.Fatalf("Got %v redundant assignments, expected 4", cnt)
 	}
@@ -40,8 +40,8 @@ func BenchmarkDay4_parseAndSolve(b *testing.B) {
 	}
 }
 
-func day4DevNull(assignments []sectionAssignment) (int, int) {
-	return countAssignmentsWhere(assignments, isRedundantAssignment),
-		countAssignmentsWhere(assignments, isOverlappingAssignment)
+func day4DevNull(assignments []SectionAssignment) (int, int) {
+	return CountAssignmentsWhere(assignments, isRedundantAssignment),
+		CountAssignmentsWhere(assignments, isOverlappingAssignment)
 
 }

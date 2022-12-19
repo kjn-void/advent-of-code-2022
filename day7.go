@@ -2,35 +2,35 @@ package main
 
 import "fmt"
 
-type filesystem map[string]*directory
+type Filesystem map[string]*Directory
 
-type directory struct {
-	dirs  filesystem
-	files []file
-	size  int
+type Directory struct {
+	Dirs  Filesystem
+	Files []File
+	Size  int
 }
 
-type file struct {
-	size int
+type File struct {
+	Size int
 }
 
-func makeDir() *directory {
-	return &directory{filesystem{}, []file{}, 0}
+func makeDir() *Directory {
+	return &Directory{Filesystem{}, []File{}, 0}
 }
 
-func fillDirSize(d *directory) {
+func fillDirSize(d *Directory) {
 	dirSz := 0
-	for _, f := range d.files {
-		dirSz += f.size
+	for _, f := range d.Files {
+		dirSz += f.Size
 	}
-	for _, d := range d.dirs {
+	for _, d := range d.Dirs {
 		fillDirSize(d)
-		dirSz += d.size
+		dirSz += d.Size
 	}
-	d.size = dirSz
+	d.Size = dirSz
 }
 
-func parseFilesystem(input []string) *directory {
+func parseFilesystem(input []string) *Directory {
 	rootFs := makeDir()
 	i := 1
 	parseDir(rootFs, input, &i)
@@ -38,7 +38,7 @@ func parseFilesystem(input []string) *directory {
 	return rootFs
 }
 
-func parseDir(d *directory, input []string, row *int) {
+func parseDir(d *Directory, input []string, row *int) {
 	var sz int
 	var name string
 	for *row < len(input) {
@@ -54,41 +54,41 @@ func parseDir(d *directory, input []string, row *int) {
 
 		if _, err := fmt.Sscanf(cmd, "$ cd %s", &name); err == nil {
 			newDir := makeDir()
-			d.dirs[name] = newDir
+			d.Dirs[name] = newDir
 			parseDir(newDir, input, row)
 		} else if _, err := fmt.Sscanf(cmd, "%d %s", &sz, &name); err == nil {
-			(*d).files = append(d.files, file{sz})
+			(*d).Files = append(d.Files, File{sz})
 		} else {
 			panic("Failed to parse input")
 		}
 	}
 }
 
-func visitDirs(d directory, visitor func(directory)) {
-	for _, subDir := range d.dirs {
+func visitDirs(d Directory, visitor func(Directory)) {
+	for _, subDir := range d.Dirs {
 		visitDirs(*subDir, visitor)
 	}
 	visitor(d)
 }
 
-func (d directory) sumSizeWithLimit(maxSize int) int {
+func (d Directory) SumSizeWithLimit(maxSize int) int {
 	sum := 0
-	visitDirs(d, func(d directory) {
-		if d.size <= maxSize {
-			sum += d.size
+	visitDirs(d, func(d Directory) {
+		if d.Size <= maxSize {
+			sum += d.Size
 		}
 	})
 	return sum
 }
 
-func (d directory) bestFitForCap(total, required int) int {
-	used := d.size
+func (d Directory) BestFitForCap(total, required int) int {
+	used := d.Size
 	free := total - used
 	needToFreeUp := required - free
 	bestFit := used
-	visitDirs(d, func(d directory) {
-		if d.size >= needToFreeUp && bestFit > d.size {
-			bestFit = d.size
+	visitDirs(d, func(d Directory) {
+		if d.Size >= needToFreeUp && bestFit > d.Size {
+			bestFit = d.Size
 		}
 	})
 	return bestFit
@@ -96,8 +96,8 @@ func (d directory) bestFitForCap(total, required int) int {
 
 func day7(input []string) {
 	fs := parseFilesystem(input)
-	fmt.Println(fs.sumSizeWithLimit(100000))
-	fmt.Println(fs.bestFitForCap(70000000, 30000000))
+	fmt.Println(fs.SumSizeWithLimit(100000))
+	fmt.Println(fs.BestFitForCap(70000000, 30000000))
 }
 
 func init() {

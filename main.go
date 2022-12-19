@@ -43,7 +43,7 @@ func main() {
 	flag.Parse()
 	days := parseDays(flag.Args())
 	for _, day := range days {
-		fmt.Printf("Day %v\n", day)
+		fmt.Printf("# Day %v\n", day)
 		Solutions[day](inputAsString(day))
 	}
 }

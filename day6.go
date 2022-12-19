@@ -30,7 +30,7 @@ func markerOffset(signal string, markerLen int) int {
 
 }
 
-func startOfPacketMarker(signal string) int {
+func StartOfPacketMarker(signal string) int {
 	return markerOffset(signal, START_OF_PACKET_MARKER_LEN)
 }
 
@@ -40,7 +40,7 @@ func startOfMessageMarker(signal string) int {
 
 func day6(input []string) {
 	signal := input[0]
-	fmt.Println(startOfPacketMarker(signal))
+	fmt.Println(StartOfPacketMarker(signal))
 	fmt.Println(startOfMessageMarker(signal))
 }
 

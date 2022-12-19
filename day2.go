@@ -5,31 +5,31 @@ import (
 )
 
 const (
-	rock     = 1
-	paper    = 2
-	scissors = 3
+	ROCK     = 1
+	PAPER    = 2
+	SCISSORS = 3
 )
 
 const (
-	loss = 0
-	draw = 3
-	win  = 6
+	LOSS = 0
+	DRAW = 3
+	WIN  = 6
 )
 
-func tournamentScorePart1(rounds []string) int {
+func TournamentScorePart1(rounds []string) int {
 	roundScores := map[string]int{
 		// opponent: rock
-		"A X": draw + rock,
-		"A Y": win + paper,
-		"A Z": loss + scissors,
+		"A X": DRAW + ROCK,
+		"A Y": WIN + PAPER,
+		"A Z": LOSS + SCISSORS,
 		// opponent: paper
-		"B X": loss + rock,
-		"B Y": draw + paper,
-		"B Z": win + scissors,
+		"B X": LOSS + ROCK,
+		"B Y": DRAW + PAPER,
+		"B Z": WIN + SCISSORS,
 		// opponent: scissors
-		"C X": win + rock,
-		"C Y": loss + paper,
-		"C Z": draw + scissors,
+		"C X": WIN + ROCK,
+		"C Y": LOSS + PAPER,
+		"C Z": DRAW + SCISSORS,
 	}
 	score := 0
 	for _, round := range rounds {
@@ -38,20 +38,20 @@ func tournamentScorePart1(rounds []string) int {
 	return score
 }
 
-func tournamentScorePart2(rounds []string) int {
+func TournamentScorePart2(rounds []string) int {
 	roundScores := map[string]int{
 		// opponent: rock
-		"A X": loss + scissors,
-		"A Y": draw + rock,
-		"A Z": win + paper,
+		"A X": LOSS + SCISSORS,
+		"A Y": DRAW + ROCK,
+		"A Z": WIN + PAPER,
 		// opponent: paper
-		"B X": loss + rock,
-		"B Y": draw + paper,
-		"B Z": win + scissors,
+		"B X": LOSS + ROCK,
+		"B Y": DRAW + PAPER,
+		"B Z": WIN + SCISSORS,
 		// opponent: scissors
-		"C X": loss + paper,
-		"C Y": draw + scissors,
-		"C Z": win + rock,
+		"C X": LOSS + PAPER,
+		"C Y": DRAW + SCISSORS,
+		"C Z": WIN + ROCK,
 	}
 	score := 0
 	for _, round := range rounds {
@@ -61,8 +61,8 @@ func tournamentScorePart2(rounds []string) int {
 }
 
 func day2(input []string) {
-	fmt.Println(tournamentScorePart1(input))
-	fmt.Println(tournamentScorePart2(input))
+	fmt.Println(TournamentScorePart1(input))
+	fmt.Println(TournamentScorePart2(input))
 }
 
 func init() {

@@ -68,5 +68,3 @@ func day10(input []string) {
 func init() {
 	Solutions[10] = day10
 }
-
-// 14600 is too high

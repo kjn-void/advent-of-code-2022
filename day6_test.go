@@ -13,7 +13,7 @@ var input6 = []string{
 func TestDay6_1(t *testing.T) {
 	offsets := [...]int{7, 5, 6, 10, 11}
 	for i := 0; i < len(input6); i++ {
-		markerOffset := startOfPacketMarker(input6[i])
+		markerOffset := StartOfPacketMarker(input6[i])
 		expected := offsets[i]
 		if markerOffset != expected {
 			t.Fatalf("Got %d, expected %d", markerOffset, expected)
@@ -38,7 +38,7 @@ func BenchmarkDay6_startOfPacketMarker(b *testing.B) {
 	signal := inputAsString(6)[0]
 	total := 0
 	for n := 0; n < b.N; n++ {
-		result += startOfPacketMarker(signal)
+		result += StartOfPacketMarker(signal)
 	}
 	result = total
 }

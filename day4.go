@@ -2,27 +2,27 @@ package main
 
 import "fmt"
 
-type cleaningSection struct {
-	start int
-	end   int
+type CleaningSection struct {
+	Start int
+	End   int
 }
 
-type sectionAssignment struct {
-	a cleaningSection
-	b cleaningSection
+type SectionAssignment struct {
+	A CleaningSection
+	B CleaningSection
 }
 
-func isRedundantAssignment(sa sectionAssignment) bool {
-	return (sa.a.start <= sa.b.start && sa.a.end >= sa.b.end) ||
-		(sa.b.start <= sa.a.start && sa.b.end >= sa.a.end)
+func isRedundantAssignment(sa SectionAssignment) bool {
+	return (sa.A.Start <= sa.B.Start && sa.A.End >= sa.B.End) ||
+		(sa.B.Start <= sa.A.Start && sa.B.End >= sa.A.End)
 }
 
-func isOverlappingAssignment(sa sectionAssignment) bool {
-	return (sa.a.start <= sa.b.start && sa.a.end >= sa.b.start) ||
-		(sa.b.start <= sa.a.start && sa.b.end >= sa.a.start)
+func isOverlappingAssignment(sa SectionAssignment) bool {
+	return (sa.A.Start <= sa.B.Start && sa.A.End >= sa.B.Start) ||
+		(sa.B.Start <= sa.A.Start && sa.B.End >= sa.A.Start)
 }
 
-func countAssignmentsWhere(sas []sectionAssignment, predicate func(sectionAssignment) bool) int {
+func CountAssignmentsWhere(sas []SectionAssignment, predicate func(SectionAssignment) bool) int {
 	cnt := 0
 	for _, sa := range sas {
 		if predicate(sa) {
@@ -32,12 +32,12 @@ func countAssignmentsWhere(sas []sectionAssignment, predicate func(sectionAssign
 	return cnt
 }
 
-func parseSectionAssignments(input []string) []sectionAssignment {
-	sas := []sectionAssignment{}
+func parseSectionAssignments(input []string) []SectionAssignment {
+	sas := []SectionAssignment{}
 	for _, row := range input {
-		var sa sectionAssignment
+		var sa SectionAssignment
 		_, err := fmt.Sscanf(row, "%d-%d,%d-%d",
-			&sa.a.start, &sa.a.end, &sa.b.start, &sa.b.end)
+			&sa.A.Start, &sa.A.End, &sa.B.Start, &sa.B.End)
 		if err != nil {
 			panic("Invalid input: " + err.Error())
 		}
@@ -48,8 +48,8 @@ func parseSectionAssignments(input []string) []sectionAssignment {
 
 func day4(input []string) {
 	assignments := parseSectionAssignments(input)
-	fmt.Println(countAssignmentsWhere(assignments, isRedundantAssignment))
-	fmt.Println(countAssignmentsWhere(assignments, isOverlappingAssignment))
+	fmt.Println(CountAssignmentsWhere(assignments, isRedundantAssignment))
+	fmt.Println(CountAssignmentsWhere(assignments, isOverlappingAssignment))
 }
 
 func init() {

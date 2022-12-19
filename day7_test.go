@@ -30,14 +30,14 @@ var input7 = []string{
 
 func TestDay7_1(t *testing.T) {
 	fs := parseFilesystem(input7)
-	if fs.size != 48381165 {
-		t.Fatalf("Filesystem size is %d, expected 48381165", fs.size)
+	if fs.Size != 48381165 {
+		t.Fatalf("Filesystem size is %d, expected 48381165", fs.Size)
 	}
 }
 
 func TestDay7_2(t *testing.T) {
 	fs := parseFilesystem(input7)
-	fsSize := fs.sumSizeWithLimit(100000)
+	fsSize := fs.SumSizeWithLimit(100000)
 	if fsSize != 95437 {
 		t.Fatalf("Filesystem size is %d, expected 95437", fsSize)
 	}
@@ -45,7 +45,7 @@ func TestDay7_2(t *testing.T) {
 
 func TestDay7_4(t *testing.T) {
 	fs := parseFilesystem(input7)
-	freeUp := fs.bestFitForCap(70000000, 30000000)
+	freeUp := fs.BestFitForCap(70000000, 30000000)
 	if freeUp != 24933642 {
 		t.Fatalf("Selected size is %d, expected 24933642", freeUp)
 	}
@@ -61,13 +61,13 @@ func BenchmarkDay7_parsing(b *testing.B) {
 func BenchmarkDay7_part1(b *testing.B) {
 	fs := parseFilesystem(inputAsString(7))
 	for n := 0; n < b.N; n++ {
-		fs.sumSizeWithLimit(100000)
+		fs.SumSizeWithLimit(100000)
 	}
 }
 
 func BenchmarkDay7_part2(b *testing.B) {
 	fs := parseFilesystem(inputAsString(7))
 	for n := 0; n < b.N; n++ {
-		fs.bestFitForCap(70000000, 30000000)
+		fs.BestFitForCap(70000000, 30000000)
 	}
 }

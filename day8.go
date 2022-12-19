@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 type TreePos struct {
-	x, y int
+	X, Y int
 }
 type Forest map[TreePos]int
 
@@ -22,8 +22,8 @@ func parseForest(input []string) Forest {
 
 func (forest Forest) moveAt(pos TreePos, dx, dy int, visitor func(Forest, TreePos) bool) {
 	for {
-		pos.x += dx
-		pos.y += dy
+		pos.X += dx
+		pos.Y += dy
 		if !visitor(forest, pos) {
 			break
 		}
@@ -35,7 +35,7 @@ func (forest Forest) isVisible(pos TreePos) bool {
 	visible := false
 	for i := 0; !visible && i < len(allDirections); i++ {
 		d := allDirections[i]
-		forest.moveAt(pos, d.x, d.y, func(f Forest, p TreePos) bool {
+		forest.moveAt(pos, d.X, d.Y, func(f Forest, p TreePos) bool {
 			if height, inForest := f[p]; !inForest {
 				visible = true
 				return false
@@ -62,7 +62,7 @@ func (forest Forest) scenicScore(pos TreePos) int {
 	score := 1
 	for _, d := range allDirections {
 		steps := 0
-		forest.moveAt(pos, d.x, d.y, func(f Forest, p TreePos) bool {
+		forest.moveAt(pos, d.X, d.Y, func(f Forest, p TreePos) bool {
 			if height, inForest := f[p]; !inForest {
 				return false
 			} else {

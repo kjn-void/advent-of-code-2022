@@ -17,8 +17,8 @@ const (
 )
 
 const (
-	PRODUCTION_TIME_LIMIT_PART1 = 24
-	PRODUCTION_TIME_LIMIT_PART2 = 32
+	ProductionTimeLimitPart1 = 24
+	ProductionTimeLimitPart2 = 32
 )
 
 type RobotId int
@@ -180,7 +180,7 @@ func (blueprint Blueprint) findMaxOpenGeodes(timeLimit int) int {
 func SumAllQualityLevels(blueprints []Blueprint) int {
 	sum := 0
 	for _, blueprint := range blueprints {
-		sum += blueprint.Id * blueprint.findMaxOpenGeodes(PRODUCTION_TIME_LIMIT_PART1)
+		sum += blueprint.Id * blueprint.findMaxOpenGeodes(ProductionTimeLimitPart1)
 	}
 	return sum
 }
@@ -188,7 +188,7 @@ func SumAllQualityLevels(blueprints []Blueprint) int {
 func FindOpenGeodesProduct(blueprints []Blueprint) int {
 	product := 1
 	for _, blueprint := range blueprints[:3] {
-		product *= blueprint.findMaxOpenGeodes(PRODUCTION_TIME_LIMIT_PART2)
+		product *= blueprint.findMaxOpenGeodes(ProductionTimeLimitPart2)
 	}
 	return product
 }

@@ -6,14 +6,14 @@ import (
 	"unicode"
 )
 
-type bitset uint64
+type BitSet uint64
 
-type rucksack struct {
-	compartments [2]bitset
+type Rucksack struct {
+	Compartments [2]BitSet
 }
 
-func makeBitset(desc string) bitset {
-	bset := bitset(0)
+func makeBitset(desc string) BitSet {
+	bset := BitSet(0)
 	for _, content := range desc {
 		if unicode.IsLower(content) {
 			bset |= (1 << (content - 'a'))
@@ -24,19 +24,19 @@ func makeBitset(desc string) bitset {
 	return bset
 }
 
-func (b bitset) priority() int {
+func (b BitSet) priority() int {
 	return 1 + bits.TrailingZeros64(uint64(b))
 }
 
-func (r rucksack) priority() int {
-	return (r.compartments[0] & r.compartments[1]).priority()
+func (r Rucksack) priority() int {
+	return (r.Compartments[0] & r.Compartments[1]).priority()
 }
 
-func (r rucksack) items() bitset {
-	return r.compartments[0] | r.compartments[1]
+func (r Rucksack) items() BitSet {
+	return r.Compartments[0] | r.Compartments[1]
 }
 
-func sumOfDuplicateItems(rs []rucksack) int {
+func SumOfDuplicateItems(rs []Rucksack) int {
 	sum := 0
 	for _, r := range rs {
 		sum += r.priority()
@@ -44,7 +44,7 @@ func sumOfDuplicateItems(rs []rucksack) int {
 	return sum
 }
 
-func groupPriority(group []rucksack) int {
+func groupPriority(group []Rucksack) int {
 	grpItems := group[0].items()
 	for _, rcksck := range group[1:] {
 		grpItems &= rcksck.items()
@@ -52,11 +52,11 @@ func groupPriority(group []rucksack) int {
 	return grpItems.priority()
 }
 
-func chunks(rs []rucksack, stride int) chan []rucksack {
-	ch := make(chan []rucksack)
+func chunks(rs []Rucksack, stride int) chan []Rucksack {
+	ch := make(chan []Rucksack)
 	go func() {
 		for i := 0; i < len(rs); i += stride {
-			chks := []rucksack{}
+			chks := []Rucksack{}
 			for j := i; j < i+stride; j++ {
 				chks = append(chks, rs[j])
 			}
@@ -67,7 +67,7 @@ func chunks(rs []rucksack, stride int) chan []rucksack {
 	return ch
 }
 
-func sumOfGroupItems(rs []rucksack) int {
+func SumOfGroupItems(rs []Rucksack) int {
 	sum := 0
 	for group := range chunks(rs, 3) {
 		sum += groupPriority(group)
@@ -75,21 +75,21 @@ func sumOfGroupItems(rs []rucksack) int {
 	return sum
 }
 
-func parseRucksacks(input []string) []rucksack {
-	rs := []rucksack{}
+func parseRucksacks(input []string) []Rucksack {
+	rs := []Rucksack{}
 	for _, row := range input {
 		mid := len(row) / 2
 		a := makeBitset(row[:mid])
 		b := makeBitset(row[mid:])
-		rs = append(rs, rucksack{[2]bitset{a, b}})
+		rs = append(rs, Rucksack{[2]BitSet{a, b}})
 	}
 	return rs
 }
 
 func day3(input []string) {
 	rs := parseRucksacks(input)
-	fmt.Println(sumOfDuplicateItems(rs))
-	fmt.Println(sumOfGroupItems(rs))
+	fmt.Println(SumOfDuplicateItems(rs))
+	fmt.Println(SumOfGroupItems(rs))
 }
 
 func init() {
