@@ -47,13 +47,13 @@ type Production struct {
 	Inventory     Resources
 }
 
-func canBuild(requirements, inventory Resources) bool {
-	return requirements.Ore <= inventory.Ore &&
-		requirements.Clay <= inventory.Clay &&
-		requirements.Obsidian <= inventory.Obsidian
+func (production *Production) canBuild(requirements Resources) bool {
+	return requirements.Ore <= production.Inventory.Ore &&
+		requirements.Clay <= production.Inventory.Clay &&
+		requirements.Obsidian <= production.Inventory.Obsidian
 }
 
-func (production Production) shouldBuild(robot RobotId) bool {
+func (production *Production) shouldBuild(robot RobotId) bool {
 	switch robot {
 	case Ore:
 		return production.InhibitRobots&(1<<Ore) == 0 &&
@@ -68,19 +68,19 @@ func (production Production) shouldBuild(robot RobotId) bool {
 	return true
 }
 
-func (production Production) mustBuild() bool {
-	return canBuild(production.Robots[Ore], production.Inventory) &&
-		canBuild(production.Robots[Clay], production.Inventory) &&
-		canBuild(production.Robots[Obsidian], production.Inventory) &&
-		canBuild(production.Robots[Geode], production.Inventory)
+func (production *Production) mustBuild() bool {
+	return production.canBuild(production.Robots[Ore]) &&
+		production.canBuild(production.Robots[Clay]) &&
+		production.canBuild(production.Robots[Obsidian]) &&
+		production.canBuild(production.Robots[Geode])
 }
 
-func (production Production) startBuilds() []Production {
+func (production *Production) startBuilds() []Production {
 	prods := []Production{}
 	if !production.mustBuild() {
-		prod := production
+		prod := *production
 		for robotId := RobotId(0); robotId < RobotCnt; robotId++ {
-			if canBuild(production.Blueprint.Robots[robotId], production.Inventory) {
+			if production.canBuild(production.Blueprint.Robots[robotId]) {
 				prod.InhibitRobots |= 1 << robotId
 			}
 		}
@@ -88,8 +88,8 @@ func (production Production) startBuilds() []Production {
 	}
 	for i, robot := range production.Blueprint.Robots {
 		robotId := RobotId(i)
-		if canBuild(robot, production.Inventory) && production.shouldBuild(robotId) {
-			prod := production
+		if production.canBuild(robot) && production.shouldBuild(robotId) {
+			prod := *production
 			prod.InhibitRobots = 0
 			prod.Building = robotId
 			prod.Inventory.Ore -= robot.Ore
@@ -115,7 +115,7 @@ func (production *Production) collect() {
 	production.NumOpenGeodes += production.NumRobots[Geode]
 }
 
-func (production Production) tick(nextSteps *[]Production) {
+func (production *Production) tick(nextSteps *[]Production) {
 	for _, prod := range production.startBuilds() {
 		prod.collect()
 		prod.finishBuild()
@@ -133,7 +133,7 @@ func doRound(prods []Production) []Production {
 	return nxt
 }
 
-func (production Production) shouldContinue() bool {
+func (production *Production) shouldContinue() bool {
 	return production.Inventory.Ore <= production.Blueprint.Peak.Ore*4 &&
 		production.Inventory.Clay <= production.Blueprint.Peak.Clay*4
 }
