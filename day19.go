@@ -40,8 +40,9 @@ type Production struct {
 	NumRobots     [RobotCnt]uint8
 	NumOpenGeodes uint8
 	Building      RobotId
-	// Robot(s) that could have been built, earlier but wasn't
-	// clear this when next any other robot is built
+	// Robot(s) that could have been built earlier but wasn't, no point in
+	// building that type of robot before building something else.
+	// This field is reset when the next robot is built.
 	InhibitRobots uint8
 	Inventory     Resources
 }
