@@ -2,7 +2,10 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+)
 
 const (
 	Ore RobotId = iota
@@ -111,34 +114,64 @@ func (production *Production) collect() {
 	production.NumOpenGeodes += production.NumRobots[Geode]
 }
 
-func (production Production) tick(nextSteps *[]Production, maxOpenGeodes *uint8) {
+func (production Production) tick(nextSteps *[]Production) {
 	for _, prod := range production.startBuilds() {
 		prod.collect()
 		prod.finishBuild()
-		if *maxOpenGeodes < prod.NumOpenGeodes {
-			*maxOpenGeodes = prod.NumOpenGeodes
-		}
 		*nextSteps = append(*nextSteps, prod)
 	}
 }
 
-func (production Production) shouldContinue(maxOpenGeodes uint8) bool {
+func doRound(prods []Production) []Production {
+	nxt := make([]Production, 0, len(prods))
+	for _, prod := range prods {
+		if prod.shouldContinue() {
+			prod.tick(&nxt)
+		}
+	}
+	return nxt
+}
+
+func (production Production) shouldContinue() bool {
 	return production.Inventory.Ore <= production.Blueprint.Peak.Ore*4 &&
 		production.Inventory.Clay <= production.Blueprint.Peak.Clay*4
 }
 
 func (blueprint Blueprint) findMaxOpenGeodes(timeLimit int) int {
-	maxOpenGeodes := uint8(0)
-	cur := []Production{{Blueprint: &blueprint, Building: Nothing, NumRobots: [4]uint8{1}}}
-	for time := 1; time <= timeLimit; time++ {
-		nxt := make([]Production, 0, len(cur))
-		for _, prod := range cur {
-			if prod.shouldContinue(maxOpenGeodes) {
-				prod.tick(&nxt, &maxOpenGeodes)
-			}
+	prods := []Production{{Blueprint: &blueprint, Building: Nothing, NumRobots: [4]uint8{1}}}
+	time := 1
+	for ; time <= timeLimit; time++ {
+		prods = doRound(prods)
+		if len(prods) > 8*runtime.NumCPU() {
+			break
 		}
-		cur = nxt
 	}
+	maxOpenGeodes := uint8(0)
+	workers := len(prods)
+	maxOpenGeodesCh := make(chan uint8, runtime.NumCPU())
+	// Fan-out on multiple CPU-cores
+	for _, prod := range prods {
+		go func(p Production) {
+			ps := []Production{p}
+			for t := time; t < timeLimit; t++ {
+				ps = doRound(ps)
+			}
+			maxOG := uint8(0)
+			for _, p := range ps {
+				if maxOG < p.NumOpenGeodes {
+					maxOG = p.NumOpenGeodes
+				}
+			}
+			maxOpenGeodesCh <- maxOG
+		}(prod)
+	}
+	for i := 0; i < workers; i++ {
+		openGeodes := <-maxOpenGeodesCh
+		if maxOpenGeodes < openGeodes {
+			maxOpenGeodes = openGeodes
+		}
+	}
+
 	return int(maxOpenGeodes)
 }
 
