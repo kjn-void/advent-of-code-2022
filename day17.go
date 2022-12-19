@@ -129,8 +129,8 @@ func DropRocksIntoWell(jets Jets, result chan uint64) {
 	highest := uint64(0)
 	shapeIndex := 0
 	jetIndex := 0
-	well := Well{}
 	seen := map[ShapeJetIndices]RoundHeightPair{}
+	well := Well{}
 	well.createFloor()
 
 	for n := uint64(0); n <= ROCK_STOP_LIMIT; n++ {

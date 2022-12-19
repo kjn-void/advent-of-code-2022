@@ -218,7 +218,7 @@ func FindMaxPressureReleaseWithElephant(valves []*Valve) int {
 func day16(input []string) {
 	valves := parseValves(input)
 	fmt.Println(FindMaxPressureRelease(valves))
-	fmt.Println(FindMaxPressureReleaseWithElephant(valves))
+	//fmt.Println(FindMaxPressureReleaseWithElephant(valves))
 }
 
 func init() {

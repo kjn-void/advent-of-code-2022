@@ -45,3 +45,10 @@ func TestDay16_3(t *testing.T) {
 		t.Fatalf("Wrong pressure release, expected 1707, got %d", pressure)
 	}
 }
+
+func BenchmarkDay16_part1(b *testing.B) {
+	valves := parseValves(inputAsString(16))
+	for n := 0; n < b.N; n++ {
+		FindMaxPressureRelease(valves)
+	}
+}
