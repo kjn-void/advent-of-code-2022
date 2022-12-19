@@ -144,13 +144,14 @@ func (blueprint Blueprint) findMaxOpenGeodes(timeLimit int) int {
 	for ; time <= timeLimit; time++ {
 		prods = doRound(prods)
 		if len(prods) > 8*runtime.NumCPU() {
+			// "Enough" work-items to perform CPU-core fan-out...
 			break
 		}
 	}
 	maxOpenGeodes := uint8(0)
 	workers := len(prods)
 	maxOpenGeodesCh := make(chan uint8, runtime.NumCPU())
-	// Fan-out on multiple CPU-cores
+	// ...fan-out to multiple CPU-cores
 	for _, prod := range prods {
 		go func(p Production) {
 			ps := []Production{p}
