@@ -35,11 +35,11 @@ func (number *Number) moveForward(steps int) {
 }
 
 func (number *Number) move(period int) {
-	val := number.Value
-	if number.Value < 0 {
-		val = int64(period) + (val % int64(period))
+	steps := int(number.Value % int64(period))
+	if steps < 0 {
+		steps += period
 	}
-	number.moveForward(int(val % int64(period)))
+	number.moveForward(steps)
 }
 
 func mix(encryptedFile EncryptedFile) {
