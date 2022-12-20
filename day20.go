@@ -18,35 +18,33 @@ type EncryptedFile struct {
 	Numbers []*Number
 }
 
-func (number *Number) moveBackwards(period int) {
-	steps := int(-number.Value % int64(period-1))
-	for i := 0; i < steps; i++ {
-		prev := number.Prev
-		prev.Prev.Next, prev.Next, number.Next, prev.Prev, number.Prev, number.Next.Prev =
-			number, number.Next, prev, number, prev.Prev, prev
+func (number *Number) moveForward(steps int) {
+	if steps == 0 {
+		return
 	}
-}
-
-func (number *Number) moveForward(period int) {
-	steps := int(number.Value % int64(period-1))
+	number.Prev.Next = number.Next
+	number.Next.Prev = number.Prev
+	other := number
 	for i := 0; i < steps; i++ {
-		next := number.Next
-		number.Prev.Next, number.Next, next.Next, number.Prev, next.Prev, next.Next.Prev =
-			next, next.Next, number, next, number.Prev, number
+		other = other.Next
 	}
+	number.Prev = other
+	number.Next = other.Next
+	other.Next.Prev = number
+	other.Next = number
 }
 
 func (number *Number) move(period int) {
+	val := number.Value
 	if number.Value < 0 {
-		number.moveBackwards(period)
-	} else {
-		number.moveForward(period)
+		val = int64(period) + (val % int64(period))
 	}
+	number.moveForward(int(val % int64(period)))
 }
 
 func mix(encryptedFile EncryptedFile) {
 	for _, number := range encryptedFile.Numbers {
-		number.move(len(encryptedFile.Numbers))
+		number.move(len(encryptedFile.Numbers) - 1)
 	}
 }
 

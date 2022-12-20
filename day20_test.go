@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
 var input20 = []string{"1", "2", "-3", "3", "-2", "0", "4"}
-var input20x = []string{"0", "3", "4", "5"}
 
 func TestDay20_1(t *testing.T) {
 	encryptedFile := parseEncryptedFile(input20)
@@ -32,7 +30,7 @@ func TestDay20_2(t *testing.T) {
 
 func TestDay20_3(t *testing.T) {
 	encryptedFile := parseEncryptedFile(input20)
-	encryptedFile.Numbers[0].move(len(encryptedFile.Numbers))
+	encryptedFile.Numbers[0].move(len(encryptedFile.Numbers) - 1)
 	numbers := getNumbers(encryptedFile)
 	expectedFile := []int64{0, 4, 2, 1, -3, 3, -2}
 	if !cmpNumbers(expectedFile, numbers) {
@@ -42,16 +40,6 @@ func TestDay20_3(t *testing.T) {
 
 func TestDay20_4(t *testing.T) {
 	encryptedFile := parseEncryptedFile(input20)
-	encryptedFile.Numbers[2].move(len(encryptedFile.Numbers))
-	numbers := getNumbers(encryptedFile)
-	expectedFile := []int64{0, -3, 4, 1, 2, 3, -2}
-	if !cmpNumbers(expectedFile, numbers) {
-		t.Fatalf("Number series differ, expected %v got %v", expectedFile, numbers)
-	}
-}
-
-func TestDay20_5(t *testing.T) {
-	encryptedFile := parseEncryptedFile(input20)
 	mix(encryptedFile)
 	numbers := getNumbers(encryptedFile)
 	expectedFile := []int64{0, 3, -2, 1, 2, -3, 4}
@@ -60,29 +48,12 @@ func TestDay20_5(t *testing.T) {
 	}
 }
 
-func TestDay20_6(t *testing.T) {
+func TestDay20_5(t *testing.T) {
 	encryptedFile := parseEncryptedFile(input20)
 	grooveCoord := GroveCoordinates(encryptedFile)
 	if grooveCoord != 3 {
 		t.Fatalf("Expected groove coordinates to be 3, got %d", grooveCoord)
 	}
-}
-
-/*
-0 [0 3 4 5]
-1 [0 3 4 5]
-2 [0 3 5 4]
-4 [0 5 3 4]*/
-
-func TestDay20_7(t *testing.T) {
-	f := parseEncryptedFile(input20x)
-	fmt.Println(3, getNumbers(f))
-	f.Numbers[1].move(len(f.Numbers))
-	fmt.Println(4, getNumbers(f))
-	f.Numbers[2].move(len(f.Numbers))
-	fmt.Println(5, getNumbers(f))
-	f.Numbers[3].move(len(f.Numbers))
-	fmt.Println(0, getNumbers(f))
 }
 
 func cmpNumbers(xs, ys []int64) bool {
