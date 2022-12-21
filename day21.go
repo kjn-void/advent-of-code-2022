@@ -45,43 +45,34 @@ func MyNumberForRootMonkeyMatch(mm MonkeyMatch, rootArgs string) int64 {
 	iYell := make(chan int64)
 	go rootMatcher(mm, result, rootArgs)
 	mm[MyName] = func(MonkeyMatch) int64 { return <-iYell }
-	// Find range, xB..xA where the root monkey function change sign
+	// Find range, xA..xB (xA>xB), where the root monkey function change sign
 	iYell <- 0
-	xZeroSign := isPositive(<-result)
-	aSign := xZeroSign
-	xA := int64(-1)
-	xB := int64(1)
-	for growA := true; ; growA = !growA {
-		if growA {
-			xA *= 2
-			iYell <- int64(xA)
-		} else {
-			xB *= 2
-			iYell <- int64(xB)
-		}
+	xBIsPositive := isPositive(<-result)
+	xA := int64(1)
+	xB := int64(0)
+	for {
+		iYell <- int64(xA)
 		diff := <-result
-		if isPositive(diff) != xZeroSign {
-			if growA {
-				aSign = !xZeroSign
-				xB = xA / 2
-			} else {
-				xA = xB / 2
-			}
+		if isPositive(diff) != xBIsPositive {
+			xB = xA / 2
 			break
 		}
+		xA *= 2
 	}
-	// Answer is in range xB..xA
+	// Answer is in range xA..xB
 	for {
-		n := (xB-xA)/2 + xA
+		n := (xA-xB)/2 + xB
 		iYell <- n
 		diff := <-result
 		if diff == 0 {
 			return n
 		}
-		if isPositive(diff) == aSign {
-			xA = n + 1
+		if isPositive(diff) == xBIsPositive {
+			// n on same "side" as xB
+			xB = n + 1
 		} else {
-			xB = n - 1
+			// n on same "side" as xA
+			xA = n - 1
 		}
 	}
 }
