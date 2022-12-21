@@ -45,7 +45,7 @@ func MyNumberForRootMonkeyMatch(mm MonkeyMatch, rootArgs string) int64 {
 	iYell := make(chan int64)
 	go rootMatcher(mm, result, rootArgs)
 	mm[MyName] = func(MonkeyMatch) int64 { return <-iYell }
-	// Find range, xA..xB (xA>xB), where the root monkey function change sign
+	// Find range, xB..xA (xA>xB), where the root monkey function change sign
 	iYell <- 0
 	xBIsPositive := isPositive(<-result)
 	xA := int64(1)
@@ -59,7 +59,7 @@ func MyNumberForRootMonkeyMatch(mm MonkeyMatch, rootArgs string) int64 {
 		}
 		xA *= 2
 	}
-	// Answer is in range xA..xB
+	// Answer is in range xB..xA
 	for {
 		n := (xA-xB)/2 + xB
 		iYell <- n
