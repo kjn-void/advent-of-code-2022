@@ -17,13 +17,7 @@ type ValleyPos struct {
 
 type Valley struct {
 	Width, Height int
-	Period        int
 	Blizzard
-}
-
-type ValleyPath struct {
-	Pos        ValleyPos
-	Generation int
 }
 
 var valleyStart = ValleyPos{1, 0}
@@ -81,21 +75,19 @@ func (v Valley) possibleMoves(pos ValleyPos, time int) []ValleyPos {
 }
 
 func moveThroughValleyOnce(valley Valley, start, finish ValleyPos, startTime int) int {
-	curPaths := &[]ValleyPath{{start, startTime}}
-	nxtPaths := &[]ValleyPath{}
-	visited := map[ValleyPath]bool{}
+	curPaths := &[]ValleyPos{start}
+	nxtPaths := &[]ValleyPos{}
 
 	for time := startTime; ; time++ {
-		nextGeneration := time % valley.Period
-		for _, path := range *curPaths {
-			for _, nextPos := range valley.possibleMoves(path.Pos, time) {
+		visited := map[ValleyPos]bool{}
+		for _, pos := range *curPaths {
+			for _, nextPos := range valley.possibleMoves(pos, time) {
 				if nextPos == finish {
 					return time
 				}
-				nextPath := ValleyPath{nextPos, nextGeneration}
-				if !visited[nextPath] {
-					visited[nextPath] = true
-					*nxtPaths = append(*nxtPaths, nextPath)
+				if !visited[nextPos] {
+					visited[nextPos] = true
+					*nxtPaths = append(*nxtPaths, nextPos)
 				}
 			}
 		}
@@ -141,7 +133,6 @@ func parseBlizzardValley(input []string) Valley {
 	valley.Westbound = make([]BitArray, bWidth)
 	valley.Northbound = make([]BitArray, bHeight)
 	valley.Southbound = make([]BitArray, bHeight)
-	valley.Period = leastCommonMultiple(bWidth, bHeight)
 	for i := 0; i < len(valley.Eastbound); i++ {
 		valley.Eastbound[i] = makeBitArray(bHeight)
 		valley.Westbound[i] = makeBitArray(bHeight)
@@ -180,12 +171,4 @@ func (ba *BitArray) set(i int) {
 	idx := i / 8
 	bit := i % 8
 	(*ba)[idx] |= 1 << bit
-}
-
-func leastCommonMultiple(a, b int) int {
-	for lcm := a; ; lcm++ {
-		if lcm%a == 0 && lcm%b == 0 {
-			return lcm
-		}
-	}
 }
