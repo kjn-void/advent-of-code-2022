@@ -29,7 +29,6 @@ func (ba BitArray) isSet(i int) bool {
 }
 
 func (v Valley) finish() ValleyPos {
-	// Tile just above the exit
 	return ValleyPos{v.Width - 2, v.Height - 1}
 }
 
