@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/bits"
 	"sort"
 	"strings"
 )
@@ -28,40 +29,20 @@ type ValvePath struct {
 	Pressure int
 	Elapsed  int
 	Location int
-}
-
-type ValvePathWithElephant struct {
-	ValvePath
-	IsMeAtLocation    bool
-	MovingTowards     int
-	DistanceRemaining int
-	E                 [ELEPHANT_TIME_LIMIT]string
-	M                 [ELEPHANT_TIME_LIMIT]string
-	P                 [ELEPHANT_TIME_LIMIT]int
-	D                 [ELEPHANT_TIME_LIMIT]int
+	P        []string
+	T        []int
 }
 
 type ValveQueue []ValveMapPath
 
 type ValveSet uint32
 
-type ValveVisited map[ValveSet]int
-
 func (s ValveSet) isSet(i int) bool {
 	return s&(1<<i) != 0
 }
 
-func (s ValveSet) getMoveAt() int {
-	return int(s >> 24)
-}
-
 func (s *ValveSet) set(i int) {
 	*s |= 1 << i
-}
-
-func (s *ValveSet) moveAt(idx int) {
-	*s &= ValveSet((idx << 24) - 1)
-	*s |= ValveSet(idx << 24)
 }
 
 func (q *ValveQueue) dequeue() ValveMapPath {
@@ -81,19 +62,23 @@ func (v Valve) pressureRelease(elapsed, limit int) int {
 	return v.Flow * (limit - elapsed)
 }
 
-func FindMaxPressureRelease(valves []*Valve) int {
+func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 	numValves := len(valves)
+	numSets := numValves - bits.OnesCount32(uint32(visited))
 	paths := map[ValveSet]ValvePath{}
 	// Held Karp
 	for to := 1; to < numValves; to++ {
-		s := ValveSet(1)
+		if visited.isSet(to) {
+			continue
+		}
+		s := visited
 		s.set(to)
 		valve := valves[to]
 		distance := valve.Distances[0]
-		paths[s] = ValvePath{valve.pressureRelease(distance, SOLO_TIME_LIMIT), distance, to}
+		paths[s] = ValvePath{valve.pressureRelease(distance, limit), distance, to, []string{valves[to].Name}, []int{distance}}
 	}
 
-	for s := 1; s < numValves-1; s++ {
+	for s := 1; s < numSets; s++ {
 		sPaths := map[ValveSet]ValvePath{}
 		for visited, path := range paths {
 			from := valves[path.Location]
@@ -102,8 +87,10 @@ func FindMaxPressureRelease(valves []*Valve) int {
 					newVisited := visited
 					newVisited.set(to)
 					elapsed := path.Elapsed + from.Distances[to]
-					pressure := path.Pressure + valves[to].pressureRelease(elapsed, SOLO_TIME_LIMIT)
-					newVp := ValvePath{pressure, elapsed, to}
+					pressure := path.Pressure + valves[to].pressureRelease(elapsed, limit)
+					newVp := ValvePath{pressure, elapsed, to, []string{}, []int{}}
+					newVp.P = append(append([]string{}, path.P...), valves[to].Name)
+					newVp.T = append(append([]int{}, path.T...), elapsed)
 					if vp, found := sPaths[newVisited]; !found || vp.Pressure < newVp.Pressure {
 						sPaths[newVisited] = newVp
 					}
@@ -122,103 +109,34 @@ func FindMaxPressureRelease(valves []*Valve) int {
 	return maxPressureRelease
 }
 
-func makePathWithElephant(valves []*Valve, oldPath ValvePathWithElephant, to int, s ValveSet) (ValvePathWithElephant, ValveSet) {
-	path := oldPath
-	from := oldPath.Location
-	distance := valves[from].Distances[to]
-
-	if distance > path.DistanceRemaining {
-		path.Elapsed += path.DistanceRemaining
-		path.DistanceRemaining = distance - path.DistanceRemaining
-		path.IsMeAtLocation = !path.IsMeAtLocation
-		path.Location = path.MovingTowards
-		path.MovingTowards = to
-	} else {
-		path.DistanceRemaining -= distance
-		path.Elapsed += distance
-		path.Location = to
-	}
-
-	dP := valves[path.Location].pressureRelease(path.Elapsed, ELEPHANT_TIME_LIMIT)
-	path.Pressure += dP
-	path.P[path.Elapsed] = path.Pressure
-	path.D[path.Elapsed] = dP
-	if path.IsMeAtLocation {
-		path.M[path.Elapsed] = valves[path.Location].Name
-	} else {
-		path.E[path.Elapsed] = valves[path.Location].Name
-	}
-
-	s.set(path.Location)
-	s.moveAt(path.MovingTowards)
-
-	return path, s
+func FindMaxPressureReleaseSolo(valves []*Valve) int {
+	return FindMaxPressureRelease(valves, SOLO_TIME_LIMIT, ValveSet(1))
 }
 
 func FindMaxPressureReleaseWithElephant(valves []*Valve) int {
-	numValves := len(valves)
-	paths := make([]map[ValveSet]ValvePathWithElephant, numValves)
-	for i := range paths {
-		paths[i] = map[ValveSet]ValvePathWithElephant{}
-	}
-	// Held Karp
-	start := ValvePathWithElephant{IsMeAtLocation: true}
-	for i := 0; i < len(start.E); i++ {
-		start.E[i] = ".."
-		start.M[i] = ".."
-	}
-	start.M[0] = "AA"
-	start.E[0] = "AA"
-
-	for mTo := 1; mTo < numValves-1; mTo++ {
-		for elephantTo := mTo + 1; elephantTo < numValves; elephantTo++ {
-			mDist := valves[mTo].Distances[0]
-			eDist := valves[elephantTo].Distances[0]
-			visited := ValveSet(1)
-			to := mTo
-			start.IsMeAtLocation = mDist <= eDist
-			if start.IsMeAtLocation {
-				visited.moveAt(elephantTo)
-			} else {
-				to = elephantTo
-				visited.moveAt(mTo)
-			}
-			path, newS := makePathWithElephant(valves, start, to, visited)
-			paths[0][newS] = path
+	v1 := ValveSet(1)
+	v2 := ValveSet(1)
+	for i, v := range valves {
+		switch v.Name {
+		case "AA":
+			continue
+		case "HH", "EE", "DD":
+			v1.set(i)
+		default:
+			v2.set(i)
 		}
 	}
 
-	for s := 0; s < numValves-1; s++ {
-		for visited, path := range paths[s] {
-			for to := 1; to < numValves; to++ {
-				if !visited.isSet(to) && visited.getMoveAt() != to {
-					newPath, newVisited := makePathWithElephant(valves, path, to, visited)
-					if vp, found := paths[s+1][newVisited]; !found || vp.Pressure < newPath.Pressure {
-						paths[s+1][newVisited] = newPath
-					}
-				}
-			}
-		}
-	}
-
-	maxPressureRelease := 0
-	for _, vp := range paths[len(paths)-1] {
-		if maxPressureRelease < vp.Pressure {
-			maxPressureRelease = vp.Pressure
-			fmt.Println(maxPressureRelease)
-			fmt.Println(vp.M)
-			fmt.Println(vp.E)
-			fmt.Println(vp.D)
-			fmt.Println(vp.P)
-		}
-	}
+	mp1 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, v1)
+	mp2 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, v2)
+	maxPressureRelease := mp1 + mp2
 	return maxPressureRelease
 }
 
 func day16(input []string) {
 	valves := parseValves(input)
-	fmt.Println(FindMaxPressureRelease(valves))
-	//fmt.Println(FindMaxPressureReleaseWithElephant(valves))
+	fmt.Println(FindMaxPressureReleaseSolo(valves))
+	fmt.Println(FindMaxPressureReleaseWithElephant(valves))
 }
 
 func init() {
