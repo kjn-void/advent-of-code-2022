@@ -17,21 +17,21 @@ const (
 
 type FaceId byte
 
-type Cube struct {
+type Droplet struct {
 	X, Y, Z int8
 }
 
-type CubeWorld struct {
-	cubes []Cube
+type Droplets struct {
+	Droplets []Droplet
 	// No cube is at 0 and dimensions is one larger than any cube position
-	width  int8
-	height int8
-	depth  int8
+	Width  int8
+	Height int8
+	Depth  int8
 }
 
 type Face uint64
 
-func (face *Face) set(vertex Cube, index int) {
+func (face *Face) set(vertex Droplet, index int) {
 	mask := Face((1 << POINT_STRIDE) - 1)
 	mask <<= POINT_STRIDE * index
 	*face &= ^mask
@@ -44,7 +44,7 @@ func (face *Face) set(vertex Cube, index int) {
 	*face |= pt
 }
 
-func (cube Cube) makeFace(whichFace FaceId, near bool) Face {
+func (cube Droplet) makeFace(whichFace FaceId, near bool) Face {
 	dF := int8(1)
 	if near {
 		dF = int8(0)
@@ -79,7 +79,7 @@ func (cube Cube) makeFace(whichFace FaceId, near bool) Face {
 	return face
 }
 
-func (cube Cube) faces() [6]Face {
+func (cube Droplet) faces() [6]Face {
 	return [6]Face{
 		cube.makeFace(XY_FACE, true),
 		cube.makeFace(XY_FACE, false),
@@ -90,10 +90,10 @@ func (cube Cube) faces() [6]Face {
 	}
 }
 
-func (world CubeWorld) tryFillWithWater(cubes *[]Cube, visited []bool, pos Cube) {
-	if pos.X < 0 || pos.X >= world.width ||
-		pos.Y < 0 || pos.Y >= world.height ||
-		pos.Z < 0 || pos.Z >= world.depth {
+func (world Droplets) tryFillWithWater(cubes *[]Droplet, visited []bool, pos Droplet) {
+	if pos.X < 0 || pos.X >= world.Width ||
+		pos.Y < 0 || pos.Y >= world.Height ||
+		pos.Z < 0 || pos.Z >= world.Depth {
 		return
 	}
 
@@ -104,42 +104,42 @@ func (world CubeWorld) tryFillWithWater(cubes *[]Cube, visited []bool, pos Cube)
 	visited[offset] = true
 	*cubes = append(*cubes, pos)
 
-	for _, d := range [6]Cube{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}} {
-		newPos := Cube{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z}
+	for _, d := range [6]Droplet{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}} {
+		newPos := Droplet{pos.X + d.X, pos.Y + d.Y, pos.Z + d.Z}
 		world.tryFillWithWater(cubes, visited, newPos)
 	}
 }
 
-func (world CubeWorld) visitedOffset(cube Cube) int {
+func (world Droplets) visitedOffset(cube Droplet) int {
 	x := int(cube.X)
 	y := int(cube.Y)
 	z := int(cube.Z)
-	yOffset := int(world.width)
-	zOffset := yOffset * int(world.height)
+	yOffset := int(world.Width)
+	zOffset := yOffset * int(world.Height)
 	return x + y*yOffset + z*zOffset
 }
 
-func (world CubeWorld) fillWithWater() []Cube {
-	visited := make([]bool, int(world.width)*int(world.height)*int(world.depth))
-	cubes := append([]Cube{}, world.cubes...)
+func (world Droplets) fillWithWater() []Droplet {
+	visited := make([]bool, int(world.Width)*int(world.Height)*int(world.Depth))
+	cubes := append([]Droplet{}, world.Droplets...)
 	for _, cube := range cubes {
 		visited[world.visitedOffset(cube)] = true
 	}
-	world.tryFillWithWater(&cubes, visited, Cube{})
+	world.tryFillWithWater(&cubes, visited, Droplet{})
 	return cubes
 }
 
-func (world CubeWorld) CountExteriorFreeFaces(totalFreeFaces int) int {
+func (world Droplets) CountExteriorFreeFaces(totalFreeFaces int) int {
 	surfaceAndInteriorFree := CountFreeFaces(world.fillWithWater())
-	width := int(world.width)
-	height := int(world.height)
-	depth := int(world.depth)
+	width := int(world.Width)
+	height := int(world.Height)
+	depth := int(world.Depth)
 	surfaceFaces := 2 * (width*height + width*depth + height*depth)
 	internalFaces := surfaceAndInteriorFree - surfaceFaces
 	return totalFreeFaces - internalFaces
 }
 
-func CountFreeFaces(cubes []Cube) int {
+func CountFreeFaces(cubes []Droplet) int {
 	faces := map[Face]int{}
 	for _, cube := range cubes {
 		for _, face := range cube.faces() {
@@ -157,7 +157,7 @@ func CountFreeFaces(cubes []Cube) int {
 
 func day18(input []string) {
 	world := parseCubeWorld(input)
-	freeFaces := CountFreeFaces(world.cubes)
+	freeFaces := CountFreeFaces(world.Droplets)
 	fmt.Println(freeFaces)
 	fmt.Println(world.CountExteriorFreeFaces(freeFaces))
 }
@@ -166,25 +166,25 @@ func init() {
 	Solutions[18] = day18
 }
 
-func parseCubeWorld(input []string) CubeWorld {
-	world := CubeWorld{}
+func parseCubeWorld(input []string) Droplets {
+	world := Droplets{}
 	for _, desc := range input {
-		var cube Cube
+		var cube Droplet
 		if _, err := fmt.Sscanf(desc, "%d,%d,%d", &cube.X, &cube.Y, &cube.Z); err != nil {
 			panic("Failed to parse cube")
 		}
 		cube.X++
 		cube.Y++
 		cube.Z++
-		world.cubes = append(world.cubes, cube)
-		if world.width < cube.X+2 {
-			world.width = cube.X + 2
+		world.Droplets = append(world.Droplets, cube)
+		if world.Width < cube.X+2 {
+			world.Width = cube.X + 2
 		}
-		if world.height < cube.Y+2 {
-			world.height = cube.Y + 2
+		if world.Height < cube.Y+2 {
+			world.Height = cube.Y + 2
 		}
-		if world.depth < cube.Z+2 {
-			world.depth = cube.Z + 2
+		if world.Depth < cube.Z+2 {
+			world.Depth = cube.Z + 2
 		}
 	}
 	return world
