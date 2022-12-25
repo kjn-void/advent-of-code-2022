@@ -24,21 +24,14 @@ func decToSnafu(n int) string {
 	snafu := ""
 	for n > 0 {
 		rem := n % 5
-		snafu += snafus[rem]
+		snafu = snafus[rem] + snafu
 		n /= 5
 		if rem > 2 {
+			// Add 'carry' bit
 			n++
 		}
 	}
-	return reverse(snafu)
-}
-
-func reverse(str string) string {
-	revString := ""
-	for _, v := range str {
-		revString = string(v) + revString
-	}
-	return revString
+	return snafu
 }
 
 func ConsoleSnafu(input []string) string {
