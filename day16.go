@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/bits"
+	"runtime"
 	"sort"
 	"strings"
 )
@@ -11,6 +12,7 @@ const (
 	START_VALVE         = "AA"
 	SOLO_TIME_LIMIT     = 30
 	ELEPHANT_TIME_LIMIT = 26
+	S_OFFSET            = 8
 )
 
 type Valve struct {
@@ -37,12 +39,23 @@ type ValveQueue []ValveMapPath
 
 type ValveSet uint32
 
+type ValveSetPair struct {
+	A ValveSet
+	B ValveSet
+}
+
 func (s ValveSet) isSet(i int) bool {
-	return s&(1<<i) != 0
+	return s&(1<<(i+S_OFFSET)) != 0
 }
 
 func (s *ValveSet) set(i int) {
-	*s |= 1 << i
+	*s |= 1 << (i + S_OFFSET)
+}
+
+func (s *ValveSet) at(i int) {
+	*s &= ^((ValveSet(1) << S_OFFSET) - 1)
+	*s |= ValveSet(i)
+	s.set(i)
 }
 
 func (q *ValveQueue) dequeue() ValveMapPath {
@@ -64,7 +77,7 @@ func (v Valve) pressureRelease(elapsed, limit int) int {
 
 func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 	numValves := len(valves)
-	numSets := numValves - bits.OnesCount32(uint32(visited))
+	numSets := numValves - bits.OnesCount32(uint32(visited)) - 1
 	paths := map[ValveSet]ValvePath{}
 	// Held Karp
 	for to := 1; to < numValves; to++ {
@@ -72,7 +85,7 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 			continue
 		}
 		s := visited
-		s.set(to)
+		s.at(to)
 		valve := valves[to]
 		distance := valve.Distances[0]
 		paths[s] = ValvePath{valve.pressureRelease(distance, limit), distance, to, []string{valves[to].Name}, []int{distance}}
@@ -85,7 +98,7 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 			for to := 1; to < numValves; to++ {
 				if !visited.isSet(to) {
 					newVisited := visited
-					newVisited.set(to)
+					newVisited.at(to)
 					elapsed := path.Elapsed + from.Distances[to]
 					pressure := path.Pressure + valves[to].pressureRelease(elapsed, limit)
 					newVp := ValvePath{pressure, elapsed, to, []string{}, []int{}}
@@ -110,26 +123,61 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 }
 
 func FindMaxPressureReleaseSolo(valves []*Valve) int {
-	return FindMaxPressureRelease(valves, SOLO_TIME_LIMIT, ValveSet(1))
+	return FindMaxPressureRelease(valves, SOLO_TIME_LIMIT, ValveSet(0))
+}
+
+func combIt(n, p, l int, ch chan ValveSetPair, s ValveSet) {
+	if s == ValveSet(0) {
+		defer close(ch)
+	}
+	if p == 0 {
+		p := ValveSetPair{}
+		for i := 1; i < n; i++ {
+			if s.isSet(i) {
+				p.A.set(i)
+			} else {
+				p.B.set(i)
+			}
+		}
+		ch <- p
+		return
+	}
+	for i := l; i < n; i++ {
+		newS := s
+		newS.set(i)
+		combIt(n, p-1, i+1, ch, newS)
+	}
+}
+
+func comb(n, p int) chan ValveSetPair {
+	ch := make(chan ValveSetPair)
+	go combIt(n, p, 1, ch, ValveSet(0))
+	return ch
 }
 
 func FindMaxPressureReleaseWithElephant(valves []*Valve) int {
-	v1 := ValveSet(1)
-	v2 := ValveSet(1)
-	for i, v := range valves {
-		switch v.Name {
-		case "AA":
-			continue
-		case "HH", "EE", "DD":
-			v1.set(i)
-		default:
-			v2.set(i)
+	ch := make(chan int, runtime.NumCPU())
+	for i := 0; i <= (len(valves)-1)/2; i++ {
+		go func(ii int) {
+			mpr := 0
+			for p := range comb(len(valves), ii) {
+				mp1 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, p.A)
+				mp2 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, p.B)
+				totalPressureRelease := mp1 + mp2
+				if mpr < totalPressureRelease {
+					mpr = totalPressureRelease
+				}
+			}
+			ch <- mpr
+		}(i)
+	}
+	maxPressureRelease := 0
+	for i := 0; i <= (len(valves)-1)/2; i++ {
+		mpr := <-ch
+		if maxPressureRelease < mpr {
+			maxPressureRelease = mpr
 		}
 	}
-
-	mp1 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, v1)
-	mp2 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, v2)
-	maxPressureRelease := mp1 + mp2
 	return maxPressureRelease
 }
 

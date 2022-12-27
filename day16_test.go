@@ -42,13 +42,20 @@ func TestDay16_3(t *testing.T) {
 	valves := parseValves(input16)
 	pressure := FindMaxPressureReleaseWithElephant(valves)
 	if pressure != 1707 {
-		// t.Fatalf("Wrong pressure release, expected 1707, got %d", pressure)
+		t.Fatalf("Wrong pressure release, expected 1707, got %d", pressure)
 	}
 }
 
 func BenchmarkDay16_part1(b *testing.B) {
-	valves := parseValves(inputAsString(16))
+	valves := parseValves(input16)
 	for n := 0; n < b.N; n++ {
 		FindMaxPressureReleaseSolo(valves)
+	}
+}
+
+func BenchmarkDay16_part2(b *testing.B) {
+	valves := parseValves(input16)
+	for n := 0; n < b.N; n++ {
+		FindMaxPressureReleaseWithElephant(valves)
 	}
 }
