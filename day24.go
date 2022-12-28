@@ -55,9 +55,9 @@ func (v Valley) possibleMoves(pos ValleyPos, time int) []ValleyPos {
 	steps := [5]ValleyPos{
 		{0, 0},  // Stand still
 		{0, 1},  // Move south
-		{1, 0},  // Move east
+		{1, 0},  // Move west
 		{0, -1}, // Move north
-		{-1, 0}, // Move west
+		{-1, 0}, // Move east
 	}
 	moves := []ValleyPos{}
 	valleyFinish := v.finish()
@@ -76,16 +76,17 @@ func (v Valley) possibleMoves(pos ValleyPos, time int) []ValleyPos {
 func moveThroughValleyOnce(valley Valley, start, finish ValleyPos, startTime int) int {
 	curPaths := &[]ValleyPos{start}
 	nxtPaths := &[]ValleyPos{}
+	visited := make([]int, valley.Height*valley.Width)
 
 	for time := startTime; ; time++ {
-		visited := map[ValleyPos]bool{}
 		for _, pos := range *curPaths {
 			for _, nextPos := range valley.possibleMoves(pos, time) {
 				if nextPos == finish {
 					return time
 				}
-				if !visited[nextPos] {
-					visited[nextPos] = true
+				offset := nextPos.X + nextPos.Y*valley.Width
+				if visited[offset] != time {
+					visited[offset] = time
 					*nxtPaths = append(*nxtPaths, nextPos)
 				}
 			}
