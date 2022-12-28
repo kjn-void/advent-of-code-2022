@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/bits"
-	"runtime"
 	"sort"
 	"strings"
 )
@@ -31,8 +30,6 @@ type ValvePath struct {
 	Pressure int
 	Elapsed  int
 	Location int
-	P        []string
-	T        []int
 }
 
 type ValveQueue []ValveMapPath
@@ -88,7 +85,7 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 		s.at(to)
 		valve := valves[to]
 		distance := valve.Distances[0]
-		paths[s] = ValvePath{valve.pressureRelease(distance, limit), distance, to, []string{valves[to].Name}, []int{distance}}
+		paths[s] = ValvePath{valve.pressureRelease(distance, limit), distance, to}
 	}
 
 	for s := 1; s < numSets; s++ {
@@ -101,9 +98,7 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 					newVisited.at(to)
 					elapsed := path.Elapsed + from.Distances[to]
 					pressure := path.Pressure + valves[to].pressureRelease(elapsed, limit)
-					newVp := ValvePath{pressure, elapsed, to, []string{}, []int{}}
-					newVp.P = append(append([]string{}, path.P...), valves[to].Name)
-					newVp.T = append(append([]int{}, path.T...), elapsed)
+					newVp := ValvePath{pressure, elapsed, to}
 					if vp, found := sPaths[newVisited]; !found || vp.Pressure < newVp.Pressure {
 						sPaths[newVisited] = newVp
 					}
@@ -156,23 +151,20 @@ func comb(n, p int) chan ValveSetPair {
 }
 
 func FindMaxPressureReleaseWithElephant(valves []*Valve) int {
-	ch := make(chan int, runtime.NumCPU())
+	ch := make(chan int)
+	cnt := 0
 	for i := 0; i <= (len(valves)-1)/2; i++ {
-		go func(ii int) {
-			mpr := 0
-			for p := range comb(len(valves), ii) {
-				mp1 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, p.A)
-				mp2 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, p.B)
-				totalPressureRelease := mp1 + mp2
-				if mpr < totalPressureRelease {
-					mpr = totalPressureRelease
-				}
-			}
-			ch <- mpr
-		}(i)
+		for p := range comb(len(valves), i) {
+			cnt++
+			go func(pp ValveSetPair) {
+				mp1 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, pp.A)
+				mp2 := FindMaxPressureRelease(valves, ELEPHANT_TIME_LIMIT, pp.B)
+				ch <- mp1 + mp2
+			}(p)
+		}
 	}
 	maxPressureRelease := 0
-	for i := 0; i <= (len(valves)-1)/2; i++ {
+	for ; cnt > 0; cnt-- {
 		mpr := <-ch
 		if maxPressureRelease < mpr {
 			maxPressureRelease = mpr

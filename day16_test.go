@@ -47,14 +47,14 @@ func TestDay16_3(t *testing.T) {
 }
 
 func BenchmarkDay16_part1(b *testing.B) {
-	valves := parseValves(input16)
+	valves := parseValves(inputAsString(16))
 	for n := 0; n < b.N; n++ {
 		FindMaxPressureReleaseSolo(valves)
 	}
 }
 
 func BenchmarkDay16_part2(b *testing.B) {
-	valves := parseValves(input16)
+	valves := parseValves(inputAsString(16))
 	for n := 0; n < b.N; n++ {
 		FindMaxPressureReleaseWithElephant(valves)
 	}
