@@ -1,5 +1,3 @@
-// 193140
-
 package main
 
 import (
@@ -142,12 +140,13 @@ func FinalPassword(board Board, me Me) int {
 
 func addFace(cube map[Face3D]Vec2D, sz int, board Board, tl2d Vec2D, tl3d, i, j, n Vec3D) {
 	if tile := board.safeTile(tl2d); tile == Void {
+		// No face here
 		return
 	}
 	if _, exists := cube[Face3D{tl3d, n}]; exists {
+		// Already processed
 		return
 	}
-	fmt.Println(tl2d, tl3d, n)
 	for y := 0; y < sz; y++ {
 		for x := 0; x < sz; x++ {
 			p3d := tl3d.add(i.scalarMul(x).add(j.scalarMul(y)))
@@ -160,18 +159,83 @@ func addFace(cube map[Face3D]Vec2D, sz int, board Board, tl2d Vec2D, tl3d, i, j,
 	addFace(cube, sz, board, tl2d.add(Vec2D{0, sz}), tl3d.add(j.scalarMul(sz-1)), i, j.cross(i), n.cross(i))
 }
 
-func foldCube(board Board, sz int, topLeft Vec2D) map[Face3D]Vec2D {
+func foldCube(board Board, sz int, topLeft Vec2D, start3d, i, j, n Vec3D) map[Face3D]Vec2D {
 	cube := map[Face3D]Vec2D{}
-	addFace(cube, sz, board, topLeft, Vec3D{}, Vec3D{1, 0, 0}, Vec3D{0, 1, 0}, Vec3D{0, 0, 1})
+	addFace(cube, sz, board, topLeft, start3d, i, j, n)
 	return cube
 }
 
-func FinalPasswordCube(board Board, sz int, topLeft Vec2D, actions []Action) int {
-	cube := foldCube(board, sz, topLeft)
-	for k, v := range cube {
-		fmt.Println(k, v)
+func isPastEdge(pos Vec3D, sz int) bool {
+	return pos.X < 0 || pos.Y < 0 || pos.Z < 0 ||
+		pos.X >= sz || pos.Y >= sz || pos.Z >= sz
+}
+
+func facing(cube map[Face3D]Vec2D, sz int, pos, forward, normal Vec3D) Facing {
+	pt0 := pos
+	pt1 := pos.add(forward)
+	if isPastEdge(pt1, sz) {
+		pt0, pt1 = pt0.add(forward.scalarMul(-1)), pt0
 	}
-	return 0
+	p0 := cube[Face3D{pt0, normal}]
+	p1 := cube[Face3D{pt1, normal}]
+	v := Vec2D{p1.X - p0.X, p1.Y - p0.Y}
+	switch v {
+	case Vec2D{1, 0}:
+		return Right
+	case Vec2D{-1, 0}:
+		return Left
+	case Vec2D{0, -1}:
+		return Up
+	case Vec2D{0, 1}:
+		return Down
+	default:
+		panic("Failed to calculate facing")
+	}
+}
+
+func FinalPasswordCube(board Board, sz int, topLeft Vec2D, actions []Action) int {
+	pos := Vec3D{0, 0, sz - 1}
+	forward, right, normal := Vec3D{1, 0, 0}, Vec3D{0, 1, 0}, Vec3D{0, 0, 1}
+	cube := foldCube(board, sz, topLeft, pos, forward, right, normal)
+	for _, action := range actions {
+		if action.IsRotation {
+			if action.Steps == 1 {
+				// Rotate right
+				forward = forward.cross(normal.scalarMul(-1))
+				right = right.cross(normal.scalarMul(-1))
+			} else {
+				// Rotate left
+				forward = forward.cross(normal)
+				right = right.cross(normal)
+			}
+		} else {
+			for s := 0; s < action.Steps; s++ {
+				nextPos := pos.add(forward)
+				nextForward := forward
+				nextNormal := normal
+				if isPastEdge(nextPos, sz) {
+					left := right.scalarMul(-1)
+					nextForward = nextForward.cross(left)
+					nextNormal = nextNormal.cross(left)
+					nextPos = pos
+				}
+				face := Face3D{nextPos, nextNormal}
+				if pos2d, found := cube[face]; found {
+					tile := board.tile(pos2d)
+					if tile == Wall {
+						break
+					}
+				} else {
+					panic(fmt.Sprintf("Out of bounds at %v", face))
+				}
+				pos = nextPos
+				forward = nextForward
+				normal = nextNormal
+			}
+		}
+	}
+	pos2d := cube[Face3D{pos, normal}]
+	return pos2d.Y*1000 + pos2d.X*4 + int(facing(cube, sz, pos, forward, normal))
 }
 
 func day22(input []string) {
