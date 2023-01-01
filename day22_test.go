@@ -28,3 +28,11 @@ func TestDay22_1(t *testing.T) {
 		t.Fatalf("Expected final password of 6032, got %d", fp)
 	}
 }
+
+func TestDay22_2(t *testing.T) {
+	board, me := parseBoard(input22)
+	fp := FinalPasswordCube(board, 4, me.Pos, me.Actions)
+	if fp != 6032 {
+		t.Fatalf("Expected final password of 6032, got %d", fp)
+	}
+}
