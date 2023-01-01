@@ -1,5 +1,3 @@
-// 1482
-
 package main
 
 import (
