@@ -32,22 +32,22 @@ func TestDay6_7(t *testing.T) {
 	}
 }
 
-var result int
-
-func BenchmarkDay6_startOfPacketMarker(b *testing.B) {
-	signal := inputAsString(6)[0]
-	total := 0
-	for n := 0; n < b.N; n++ {
-		result += StartOfPacketMarker(signal)
+func BenchmarkDay6_parse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		inputAsString(6)
 	}
-	result = total
 }
 
-func BenchmarkDay6_startOfMessageMarker(b *testing.B) {
+func BenchmarkDay6_part1(b *testing.B) {
 	signal := inputAsString(6)[0]
-	total := 0
-	for n := 0; n < b.N; n++ {
-		result += startOfMessageMarker(signal)
+	for i := 0; i < b.N; i++ {
+		StartOfPacketMarker(signal)
 	}
-	result = total
+}
+
+func BenchmarkDay6_part2(b *testing.B) {
+	signal := inputAsString(6)[0]
+	for i := 0; i < b.N; i++ {
+		startOfMessageMarker(signal)
+	}
 }

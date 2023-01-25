@@ -26,3 +26,23 @@ func TestDay3_2(t *testing.T) {
 		t.Fatalf("Group sum is %d, should be 70", sum)
 	}
 }
+
+func BenchmarkDay3_parse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		parseRucksacks(inputAsString(3))
+	}
+}
+
+func BenchmarkDay3_part1(b *testing.B) {
+	rs := parseRucksacks(inputAsString(3))
+	for i := 0; i < b.N; i++ {
+		SumOfDuplicateItems(rs)
+	}
+}
+
+func BenchmarkDay3_part2(b *testing.B) {
+	rs := parseRucksacks(inputAsString(3))
+	for i := 0; i < b.N; i++ {
+		SumOfGroupItems(rs)
+	}
+}

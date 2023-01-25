@@ -76,7 +76,7 @@ func FindMaxPressureRelease(valves []*Valve, limit int, visited ValveSet) int {
 	numValves := len(valves)
 	numSets := numValves - bits.OnesCount32(uint32(visited)) - 1
 	paths := map[ValveSet]ValvePath{}
-	// Held Karp
+	// Solve Traviling Salesman using Held Karp algorithm
 	for to := 1; to < numValves; to++ {
 		if visited.isSet(to) {
 			continue

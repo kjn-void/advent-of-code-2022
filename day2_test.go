@@ -21,3 +21,23 @@ func TestDay2_2(t *testing.T) {
 		t.Fatal("Wrong score")
 	}
 }
+
+func BenchmarkDay2_parse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		inputAsString(2)
+	}
+}
+
+func BenchmarkDay2_part1(b *testing.B) {
+	input := inputAsString(2)
+	for i := 0; i < b.N; i++ {
+		TournamentScorePart1(input)
+	}
+}
+
+func BenchmarkDay2_part2(b *testing.B) {
+	input := inputAsString(2)
+	for i := 0; i < b.N; i++ {
+		TournamentScorePart2(input)
+	}
+}

@@ -32,7 +32,7 @@ func inputAsString(day int) []string {
 		fmt.Printf("Failed to read input for day %v: %v", day, err)
 		os.Exit(1)
 	}
-	input := strings.Split(string(content), "\n")
+	input := strings.Split(strings.ReplaceAll(string(content), "\r", ""), "\n")
 	if input[len(input)-1] == "" {
 		return input[:len(input)-1]
 	}

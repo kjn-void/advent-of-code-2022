@@ -27,21 +27,22 @@ func TestDay4_2(t *testing.T) {
 	}
 }
 
-func BenchmarkDay4_solve(b *testing.B) {
+func BenchmarkDay4_parse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		parseSectionAssignments(inputAsString(4))
+	}
+}
+
+func BenchmarkDay4_part1(b *testing.B) {
 	assignments := parseSectionAssignments(inputAsString(4))
 	for i := 0; i < b.N; i++ {
-		day4DevNull(assignments)
+		CountAssignmentsWhere(assignments, isRedundantAssignment)
 	}
 }
 
-func BenchmarkDay4_parseAndSolve(b *testing.B) {
+func BenchmarkDay4_part2(b *testing.B) {
+	assignments := parseSectionAssignments(inputAsString(4))
 	for i := 0; i < b.N; i++ {
-		day4DevNull(parseSectionAssignments(inputAsString(4)))
-	}
-}
-
-func day4DevNull(assignments []SectionAssignment) (int, int) {
-	return CountAssignmentsWhere(assignments, isRedundantAssignment),
 		CountAssignmentsWhere(assignments, isOverlappingAssignment)
-
+	}
 }

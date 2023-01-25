@@ -34,16 +34,17 @@ func (et SortedElfTrain) TopThreeCarrying() int {
 func parseElfTrain(input []string) SortedElfTrain {
 	cals := Calories{}
 	elfs := SortedElfTrain{}
-	for _, cal := range input {
-		if len(cal) == 0 {
-			elfs = append(elfs, cals)
-			cals = Calories{}
-		} else {
+	for i, cal := range input {
+		if len(cal) > 0 {
 			if c, err := strconv.Atoi(cal); err == nil {
 				cals = append(cals, c)
 			} else {
 				panic("Failed to parse calories: " + err.Error())
 			}
+		}
+		if len(cal) == 0 || i == len(input)-1 {
+			elfs = append(elfs, cals)
+			cals = Calories{}
 		}
 	}
 	sort.Slice(elfs, func(i, j int) bool { return elfs[i].totalCalories() > elfs[j].totalCalories() })
